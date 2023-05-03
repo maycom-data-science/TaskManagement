@@ -41,4 +41,3 @@ class CpuMonitoringThread(threading.Thread):
                         self.total_cpu_time_init = total_cpu_time_end
                         self.idle_time_init = idle_time_end
                         return(f"{self.cpu_core} usage: {cpu_usage:.2f}%")
-                        
