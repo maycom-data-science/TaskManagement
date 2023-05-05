@@ -20,8 +20,25 @@ def get_processes_id():
     # retorna array de PIDs
     return(pids)
 
+#metodo para pegar o número de cores da máquina
+def get_number_cores():    
+    #abre o arquivo cpuinfo do diretório proc
+    with open('/proc/cpuinfo') as f:
+        cpuinfo = f.read()
+    
+    #conta a quantidade de vezes que a palavra processor aparece no arquivo cpuinfo
+    num_cores = cpuinfo.count('processor\t:')
+    #retorna um inteiro indicando o número de cores que a maquina possui
+    return num_cores
+
 if __name__ == '__main__':
-    cpu_cores = ['cpu']#, 'cpu0', 'cpu1', 'cpu2', 'cpu3', 'cpu4', 'cpu5', 'cpu6', 'cpu7', 'cpu8', 'cpu9', 'cpu10', 'cpu11']  # lista com os nomes das CPUs de interesse
+    
+
+    cpu_cores = []
+    for core in range(0, get_number_cores()):
+        cpu_cores.append('cpu'+str(core))
+   
+    print(cpu_cores)
     threads = []
     
     #print(get_processes_id())

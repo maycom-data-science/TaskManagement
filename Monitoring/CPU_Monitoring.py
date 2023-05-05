@@ -16,7 +16,7 @@ class CpuMonitoringThread(threading.Thread):
         self.cpu_core = cpu_core
         self.total_cpu_time_init = 0
         self.idle_time_init = 0
-    
+
     def get_cpu_usage(self):
         while True:    
             with open('/proc/stat', 'r') as f:
