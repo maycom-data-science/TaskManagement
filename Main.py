@@ -21,18 +21,38 @@ def get_processes_id():
     # retorna array de PIDs
     return(pids)
 
+#metodo para pegar o número de cores da máquina
+def get_number_cores():    
+    #abre o arquivo cpuinfo do diretório proc
+    with open('/proc/cpuinfo') as f:
+        cpuinfo = f.read()
+    
+    #conta a quantidade de vezes que a palavra processor aparece no arquivo cpuinfo
+    num_cores = cpuinfo.count('processor\t:')
+    #retorna um inteiro indicando o número de cores que a maquina possui
+    return num_cores
+
 if __name__ == '__main__':
-    cpu_cores = ['cpu']#, 'cpu0', 'cpu1', 'cpu2', 'cpu3', 'cpu4', 'cpu5', 'cpu6', 'cpu7', 'cpu8', 'cpu9', 'cpu10', 'cpu11']  # lista com os nomes das CPUs de interesse
+    
+
+    cpu_cores = []
+    for core in range(0, get_number_cores()):
+        cpu_cores.append('cpu'+str(core))
+   
     threads = []
     
-    #print(get_processes_id())
-    # cria uma instância da classe CpuMonitoringThread para cada CPU de interesse
+    # cria uma instância e uma thread da classe CpuMonitoringThread para cada CPU de interesse
     for cpu_core in cpu_cores:
         t = CpuMonitoringThread(cpu_core)
         t.start()
         threads.append(t)
 
-     # cria uma instância da classe MemMonitoringThread
+    #cria uma instância e uma thread da classe CpuMonitoringThread verificar o número de threads no sistema
+    threads_count = CpuMonitoringThread(cpu_core[0])
+    threads_count.start()
+    #threads.append(threads_count)
+
+    # cria uma instância da classe MemMonitoringThread
     mem = MemMonitoringThread()
     mem.start()
     threads.append(mem)
@@ -45,11 +65,18 @@ if __name__ == '__main__':
         print(process.get_process_memory_usage())
         
     # loop principal que mostra o uso de CPU
-    # while True:        
-    #     for t in threads:
-    #         try:
-    #             print(t.get_cpu_usage(), end='\n\n')                
-    #         except:
-    #             print(mem.get_mem_usage(), end='\n\n')
+
+    while True:        
+        
+        print(f"Processos rodando no sistema: {len(get_processes_id())}")
+        print(threads_count.get_threads_used(get_processes_id()), end='\n\n')             
+        for t in threads:
+            try:
+                print(t.get_cpu_usage(), end='\n')
+
+            except:
+                print(mem.get_mem_usage(), end='\n\n')
+                time.sleep(5)
+
 
 
