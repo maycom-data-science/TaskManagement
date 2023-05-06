@@ -1,5 +1,6 @@
 from Monitoring.CPU_Monitoring import CpuMonitoringThread
 from Monitoring.Mem_Monitoring import MemMonitoringThread
+from Monitoring.Process_Mem_Monitoring import ProcessMemMonitoringThread
 import threading
 import time
 import subprocess
@@ -36,12 +37,19 @@ if __name__ == '__main__':
     mem.start()
     threads.append(mem)
     
+    pids = get_processes_id()
+    
+    for pid in pids:        
+        process = ProcessMemMonitoringThread(pid)
+        print(f'PID: {pid}\n')
+        print(process.get_process_memory_usage())
+        
     # loop principal que mostra o uso de CPU
-    while True:        
-        for t in threads:
-            try:
-                print(t.get_cpu_usage(), end='\n\n')                
-            except:
-                print(mem.get_mem_usage(), end='\n\n')
+    # while True:        
+    #     for t in threads:
+    #         try:
+    #             print(t.get_cpu_usage(), end='\n\n')                
+    #         except:
+    #             print(mem.get_mem_usage(), end='\n\n')
 
 
