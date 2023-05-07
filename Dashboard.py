@@ -5,8 +5,6 @@ import subprocess
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
 
-
-
 app = Dash(__name__)
 
 #metodo para pegar o número de cores da máquina
@@ -40,6 +38,7 @@ for cpu_core in cpu_cores:
 
 #-------------------------------------------
 
+#variavel que vamos usar de "banco de dados" para utilizar no nosso dashboard
 database = {
     'index': [],
     'total_memory': 0,
@@ -49,35 +48,12 @@ database = {
     'available_memory_percentual': 0,
     'cached_memory': [],
     'virtual_memory': [],
+    'process_size': 0,
+    'process_pss': 0,
+    'process_rss': 0,
     'cpu_usage': [], #primeira possição tem o uso da cpu 0, a segunda o uso da cpu1, etc... e o ultima possição tem o uso geral da cpu
     'number_threads': 0
 }
-
-app.layout = html.Div(
-    children=[
-        dcc.Interval(id='interval', interval= 5000),
-        html.Div(id='memory_info'),   
-        dcc.Checklist(
-            id='memory_check_list',
-            options=[
-                {'label': 'Memória Disponivel', 'value': 'available_memory'},
-                {'label': 'Memória Livre', 'value': 'free_memory'},
-                {'label': 'Memória em Cache', 'value': 'cached_memory'}
-            ],
-            value=['available_memory']
-        ),
-        dcc.Graph(
-            id='memory_graph',
-            config={'displayModeBar': False},
-        ),
-        html.Div(id='cpu_info'),   
-        dcc.Graph(
-            id='CPU_graph',
-            config={'displayModeBar': False}
-        )
-    ]
-)
-
 
 mem = MemMonitoring()
 process_mem = ProcessMemMonitoring()
@@ -130,9 +106,9 @@ app.layout = html.Div(
         dcc.Checklist(
             id='memory_check_list',
             options=[
-                {'label': 'Memória Disponivel em Mb', 'value': 'available_memory'},
-                {'label': 'Memória Livre em Mb', 'value': 'free_memory'},
-                {'label': 'Memória em Cache em Mb', 'value': 'cached_memory'}
+                {'label': 'Memória Disponivel', 'value': 'available_memory'},
+                {'label': 'Memória Livre', 'value': 'free_memory'},
+                {'label': 'Memória em Cache', 'value': 'cached_memory'}
             ],
             value=['available_memory']
         ),       
@@ -150,7 +126,12 @@ app.layout = html.Div(
             options = processes,
             value= processes[0]
         ),
-        html.Div(id='process_memory_info'),
+        html.Div(id='process_memory_info'),        
+        dcc.Graph(
+            id='process_memory_graph',
+            config={'displayModeBar': False},
+        ),
+       
     ]
 )
 
@@ -187,9 +168,9 @@ def update_cpu_data(value):
 
 def update_process_memory_data(pid):
     process_data = process_mem.get_process_memory_usage(pid)
-    database['process_size'].append(process_data['size'])
-    database['process_pss'].append(process_data['pss'])
-    database['process_rss'].append(process_data['rss'])
+    database['process_size'] = process_data['size']
+    database['process_pss'] = process_data['pss']
+    database['process_rss'] = process_data['rss']
 
 
 #chama a função para atualizar os dados de memoria a cada 5 segundos
@@ -211,7 +192,12 @@ def update_total_memory(n_intervals):
 def update_memory_graph(input_data, n_intervals):
     
     graph = {
-        'data': []
+        'data': [],
+        'layout': {
+            'title': 'Uso de Memoria em Mb',
+            'height': 400,
+            'width': 600,
+        }
     }
     for x in input_data:
         #input_data é o nome do grafico que ele vai mostrar
@@ -278,7 +264,33 @@ def update_process_options(n_intervals):
 )
 def update_total_memory(process, n_intervals):
     update_process_memory_data(process)    
-    return (f'Tamanho: {database["process_size"][-1]:.2f}Mb_____Pss: {database["process_pss"][-1]:.2f}Mb _____Rss: {database["process_rss"][-1]:.2f}Mb')
+    return (f'Tamanho: {database["process_size"]:.2f}Mb_____Pss: {database["process_pss"]:.2f}Mb _____Rss: {database["process_rss"]:.2f}Mb')
 
+#chama a funcao para atualizar o grafico de memoria do processo a cada 5 segundos
+@app.callback(
+    Output('process_memory_graph', 'figure'),
+    [Input('process_memory_info', 'children') ]
+)
+def update_process_memory_graph(value):
+    
+    graph = {
+        'data': [],
+         'layout': {
+            'title': 'Uso de Memória do Processo em Mb',
+            'height': 400,
+            'width': 300,
+        }
+    }
+    
+    #input_data é o nome do grafico que ele vai mostrar
+    graph['data'].append(
+        {
+            'y': [database['process_size'], database['process_pss'], database['process_rss']][-N:], #pega a variavel do grafico que ele quer mostrar e bota no eixo y do grafico
+            'x': ['Size', 'Pss', 'Rss'][-N:], #index, contabilizacao de "tempo", no eixo x
+            'type': 'bar',
+        }
+    )
+        
+    return graph
 
 app.run_server(debug=True)
