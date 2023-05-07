@@ -37,7 +37,7 @@ class CpuMonitoringThread(threading.Thread):
                     # atualizamos as variaveis iniciais, as quais representam o uso da cpu em um primeiro instante (após essa atualização teremos uma média melhor da porcentagem de uso da cpu) 
                     self.total_cpu_time_init = total_cpu_time_end
                     self.idle_time_init = idle_time_end
-                    return(f"{self.cpu_core} usage: {cpu_usage:.2f}%")
+                    return(cpu_usage)
                     
     def get_threads_used(self, pids):
     
