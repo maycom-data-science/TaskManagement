@@ -8,7 +8,7 @@ import subprocess
 #metodo para pegar os PIDs de todos os processos que estão rodando no sistema
 def get_processes_id():
     # Executa o comando 'ps -e' no terminal e captura a saída como uma string
-    output = subprocess.check_output(['ps', '-e'])
+    output = subprocess.check_output(['ps', 'a'])
 
     pids = []
     for line in output.splitlines():

@@ -1,12 +1,7 @@
 """
-Mostrar dados globais do uso de memória do sistema, p.ex. percentual de uso da memória,
-percentual de memória livre, quantidade de memória física (RAM) e virtual, etc.
-
+Mostrar dados globais do uso de memória do sistema
 """
-import threading
-import time
-
-class MemMonitoringThread(threading.Thread):
+class MemMonitoring():
     def __init__(self):
         super().__init__()
         self.mem_total = 0
@@ -16,12 +11,12 @@ class MemMonitoringThread(threading.Thread):
         self.virtual_mem = 0        
     
     def get_mem_usage(self):    
-        while True:
+            #usar o comando open para abrir o arquivo meminfo da pasta /proc
             with open('/proc/meminfo', 'r') as f:
-                for line in f:                    
-                    l = line.split()
-                    if(l[0] == "MemTotal:"):
-                        self.mem_total = int(l[1])/1024
+                for line in f:                              #um for percorrendo cada linha do arquivo
+                    l = line.split()                        #vai transformar cada linha em um array
+                    if(l[0] == "MemTotal:"):                #vai checar o primeiro indice do array de cada linha
+                        self.mem_total = int(l[1])/1024     #atribuir o valor indicado
                     if(l[0] == "MemFree:"):
                         self.mem_free = int(l[1])/1024
                     if(l[0] == "MemAvailable:"):
@@ -32,7 +27,7 @@ class MemMonitoringThread(threading.Thread):
                         self.virtual_mem = int(l[1])/1024/1024
                     
                       
-            time.sleep(1)
+           #retornar um dicionario que sera usado no dashboard
             return ({
                 "total": self.mem_total,
                 "free": self.mem_free,
