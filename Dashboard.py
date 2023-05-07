@@ -69,7 +69,20 @@ app.layout = html.Div(
             options = processes,
             value= processes[0]
         ),
-        html.Div(id='process_memory_info')
+        html.Div(id='process_memory_info'),
+        dcc.Graph(
+            id='process_memory_graph',
+            config={'displayModeBar': False},
+        ),
+        dcc.Checklist(
+            id='process_memory_check_list',
+            options=[
+                {'label': 'Tamanho total: ', 'value': 'process_size'},
+                {'label': 'Pss total: ', 'value': 'process_pss'},
+                {'label': 'Rss total', 'value': 'process_rss'}
+            ],
+            value=['process_size']
+        ),
     ]
 )
 
@@ -145,5 +158,26 @@ def update_total_memory(process, n_intervals):
     update_process_memory_data(process)    
     return (f'Tamanho: {database["process_size"][-1]:.2f}Mb_____Pss: {database["process_pss"][-1]:.2f}Mb _____Rss: {database["process_rss"][-1]:.2f}Mb')
 
+#chama a funcao para atualizar o grafico de memoria do processo a cada 5 segundos
+@app.callback(
+    Output('process_memory_graph', 'figure'),
+    [Input('process_memory_check_list', 'value'),
+    Input('interval', 'n_intervals')]
+)
+def update_memory_graph(input_data, n_intervals):
+    
+    graph = {
+        'data': []
+    }
+    for x in input_data:
+        #input_data é o nome do grafico que ele vai mostrar
+        graph['data'].append(
+            {
+                'y': database[x][-N:], #pega a variavel do grafico que ele quer mostrar e bota no eixo y do grafico
+                'x': database['index'][-N:], #index, contabilizacao de "tempo", no eixo x
+                'name': x,                
+            },
+        )
+    return graph
 
 app.run_server(debug=True)
