@@ -1,15 +1,7 @@
 """
-2. Monitorar e apresentar as informações do uso de memória dos processos;
-Este objetivo consiste em fornecer as informações de uso de memória global do
-sistema e de cada processo individualmente. Os requisitos abaixo devem ser obrigatoriamente
-seguidos:
-1. Mostrar dados globais do uso de memória do sistema, p.ex. percentual de uso da memória,
+Mostrar dados globais do uso de memória do sistema, p.ex. percentual de uso da memória,
 percentual de memória livre, quantidade de memória física (RAM) e virtual, etc.
-2. Mostrar informações detalhadas sobre o uso de memória para cada processo, p.ex. quantidade
-total de memória alocada, quantidade de páginas de memória (total, de código, heap, stack),
-etc.
-3. Ao mostrar informações detalhadas de cada processo, as informações podem ser apresentadas
-em uma nova tela (ou aba) que, ao ser fechada, retorna a tela principal
+
 """
 import threading
 import time
