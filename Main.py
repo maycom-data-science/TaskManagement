@@ -1,6 +1,6 @@
 from Monitoring.CPU_Monitoring import CpuMonitoringThread
+from Monitoring.Process_CPU_Monitoring import ProcessCpuMonitoringThread
 from Monitoring.Mem_Monitoring import MemMonitoringThread
-import threading
 import time
 import subprocess
 
@@ -38,17 +38,23 @@ if __name__ == '__main__':
         cpu_cores.append('cpu'+str(core))
    
     threads = []
-    
+    cpu_cores_info = {}
     # cria uma instância e uma thread da classe CpuMonitoringThread para cada CPU de interesse
     for cpu_core in cpu_cores:
         t = CpuMonitoringThread(cpu_core)
         t.start()
         threads.append(t)
 
-    #cria uma instância e uma thread da classe CpuMonitoringThread verificar o número de threads no sistema
-    threads_count = CpuMonitoringThread(cpu_core[0])
-    threads_count.start()
-    #threads.append(threads_count)
+        cpu_cores_info[cpu_core] = t.get_cpu_usage()
+
+    #cria uma instância e uma thread da classe ProcessCpuMonitoringThread verificar o número de threads no sistema
+    process_cpu_usage = ProcessCpuMonitoringThread()
+    process_cpu_usage.start()
+
+
+    #dado um determinado processo ele busca infomrações como num_threads atreladas ao process, prioridade do processo, nome do processo e uso da cpu 
+    processo = get_processes_id()[145]
+    print(f"Processo: {processo} CPU usage: {process_cpu_usage.get_process_cpu_usage(processo)}")
 
     # cria uma instância da classe MemMonitoringThread
     mem = MemMonitoringThread()
@@ -59,19 +65,23 @@ if __name__ == '__main__':
     while True:        
         
         print(f"Processos rodando no sistema: {len(get_processes_id())}")
-        print(threads_count.get_threads_used(get_processes_id()))
+        print(threads[0].get_threads_used(get_processes_id()))
         
         #recebe o dicionário com os pids dos processos e os usuário
-        users = threads_count.get_process_users(get_processes_id())
+        users = threads[0].get_process_users(get_processes_id())
         unique_users = list(set(users.values())) 
         print(f"Usuários por processo: {unique_users}", end='\n\n')     
              
         for t in threads:
             try:
-                print(t.get_cpu_usage(), end='\n')
+                percent_use = t.get_cpu_usage()
+                cpu_cores_info[t.cpu_core] = percent_use
 
             except:
-                print(mem.get_mem_usage(), end='\n\n')
-                time.sleep(5)
+                print(mem.get_mem_usage(), end='\n')
 
+        print(cpu_cores_info, end='\n\n')
+        print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ")
+        
+        time.sleep(5)
 

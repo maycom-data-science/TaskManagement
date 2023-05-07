@@ -47,7 +47,9 @@ class CpuMonitoringThread(threading.Thread):
             try:
                 with open(f"/proc/{pid}/stat", 'r') as stat_file:
                     stat_content = stat_file.read()
+                    #pega o item na possição 19 que representa o número de threads que foram criadas para o processo  
                     num_threads = int(stat_content.split()[19])
+                    #soma o número de threads que foram criadas para cada um dos processos
                     total_threads += num_threads
             except:
                 continue
