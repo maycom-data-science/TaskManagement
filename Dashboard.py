@@ -4,7 +4,6 @@ from Monitoring.Process_Mem_Monitoring import ProcessMemMonitoring
 import subprocess
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
-import re
 
 
 
@@ -115,7 +114,9 @@ database = {
     'process_size': [],
     'process_pss': [],
     'process_rss': [],
-    'cpu_usage': []
+    'number_threads': [],
+    'cpu_usage': [],
+    'process_users': []
 }
 
 processes = get_processes_id()
@@ -177,7 +178,11 @@ def update_cpu_data(value):
     #print(database['cpu_usage'][0])
 
     database['number_threads'] = threads[0].get_threads_used(get_processes_id())
-    #print(database['number_threads'])
+
+    users = threads[0].get_process_users(get_processes_id())
+    unique_users = list(set(users.values())) 
+    database['process_users'] = unique_users 
+
 
 
 def update_process_memory_data(pid):
@@ -194,7 +199,7 @@ def update_process_memory_data(pid):
 )
 def update_total_memory(n_intervals):
     update_memory_data(n_intervals)
-    update_cpu_data(n_intervals) 
+    #update_cpu_data(n_intervals) 
     return (f'Memória: Total: {database["total_memory"]:.2f}Mb_____Disponivel: {database["available_memory"][-1]:.2f}Mb ({database["available_memory_percentual"]:.2f}%)_____Livre: {database["free_memory"][-1]:.2f}Mb ({database["free_memory_percentual"]:.2f}%)_____Em cache: {database["cached_memory"][-1]:.2f}Mb_____Virtual: {database["virtual_memory"][-1]:.2f}Gb')
 
 #chama a funcao para atualizar o grafico de memoria a cada 5 segundos
@@ -219,6 +224,16 @@ def update_memory_graph(input_data, n_intervals):
             },
         )
     return graph
+
+@app.callback(
+    Output('cpu_info', 'children'), 
+    Input('interval', 'n_intervals'),
+)
+
+def update_cpu_info(n_intervals):
+    update_cpu_data(n_intervals) 
+    return (f'Número total de processos no sistema: {len(get_processes_id())}_____Numero de threads criadas: {database["number_threads"]}___Usuários dos processos em exec({database["process_users"]}%)_____Uso geral da CPU: {database["cpu_usage"][-1]:.2f}%')
+
 
 @app.callback(
     Output('CPU_graph', 'figure'),
