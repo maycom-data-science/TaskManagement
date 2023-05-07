@@ -68,10 +68,14 @@ if __name__ == '__main__':
         print(threads[0].get_threads_used(get_processes_id()))
         
         #recebe o dicionário com os pids dos processos e os usuário
-        users = threads[0].get_process_users(get_processes_id())
+        '''users = threads[0].get_process_users(get_processes_id())
         unique_users = list(set(users.values())) 
-        print(f"Usuários por processo: {unique_users}", end='\n\n')     
-             
+        print(f"Usuários por processo: {unique_users}", end='\n\n') '''
+
+        #recebe o um pid e recebe o usuário do processo
+        user = process_cpu_usage.get_process_user(processo)
+        print(f"O processo {processo} tem o seguinte usuário {user}", end='\n\n') 
+
         for t in threads:
             try:
                 percent_use = t.get_cpu_usage()
