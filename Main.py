@@ -54,9 +54,7 @@ if __name__ == '__main__':
 
     # cria uma instância da classe MemMonitoringThread
     mem = MemMonitoringThread()
-    mem.start()
-    threads.append(mem)
-    
+     
     pids = get_processes_id()
     
     for pid in pids:        
