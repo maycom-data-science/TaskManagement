@@ -33,7 +33,6 @@ def get_number_cores():
 
 if __name__ == '__main__':
     
-
     cpu_cores = []
     for core in range(0, get_number_cores()):
         cpu_cores.append('cpu'+str(core))
@@ -60,7 +59,13 @@ if __name__ == '__main__':
     while True:        
         
         print(f"Processos rodando no sistema: {len(get_processes_id())}")
-        print(threads_count.get_threads_used(get_processes_id()), end='\n\n')             
+        print(threads_count.get_threads_used(get_processes_id()))
+        
+        #recebe o dicionário com os pids dos processos e os usuário
+        users = threads_count.get_process_users(get_processes_id())
+        unique_users = list(set(users.values())) 
+        print(f"Usuários por processo: {unique_users}", end='\n\n')     
+             
         for t in threads:
             try:
                 print(t.get_cpu_usage(), end='\n')

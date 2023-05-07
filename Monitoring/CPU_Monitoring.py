@@ -53,3 +53,27 @@ class CpuMonitoringThread(threading.Thread):
                 continue
 
         return(f"Total de threads: {total_threads}")
+    
+
+    def get_process_users(self, pids):
+        process_users = {}
+        for pid in pids:
+            try:
+                with open(f"/proc/{pid}/status", 'r') as status_file:
+                    status_content = status_file.readlines()
+                    for line in status_content:
+                        if line.startswith('Uid:'):
+                            #pega o userid do arquivo status
+                            uid = int(line.split()[1])
+                            with open('/etc/passwd', 'r') as passwd_file:
+                                passwd_content = passwd_file.readlines()
+                                for passwd_line in passwd_content:
+                                    #verifica no arquivo passwd qual usuário possui o pid mapeado para o processo
+                                    if int(passwd_line.split(':')[2]) == uid:
+                                        username = passwd_line.split(':')[0]
+                                        process_users[pid] = username
+            except:
+                continue
+        
+        return process_users 
+
