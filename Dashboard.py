@@ -119,10 +119,6 @@ app.layout = html.Div(
         dcc.Graph(
             id='process_memory_graph',
             config={'displayModeBar': False},
-        ),
-        dcc.Graph(
-            id='CPU_process_graph',
-            config={'displayModeBar': False},
         )
     ]
 )
@@ -273,30 +269,6 @@ def update_total_memory(process, n_intervals):
 def update_total_cpu(process, n_intervals):
     update_process_cpu_data(process, n_intervals)    
     return (f'Nome do Processo: {database["process_name"]}---Nome de usuário: {database["process_users"]}---ThreadsDoProcesso:{database["process_threads"]}---Processo_Uso da CPU: {database["process_cpu_use"]}---Prioridade do processo {database["process_priority"]}')
-
-@app.callback(
-    Output('CPU_process_graph', 'figure'),
-    [Input('process_dropdown', 'value'),Input('interval', 'n_intervals')]
-)
-def update_process_cpu_graph(process, n_intervals):
-    graph = {
-        'data': [],
-        'layout': {
-            'title': 'Uso de CPU do processo em %',
-            'height': 400,
-            'width': 600,
-        }
-    }
-    graph['data'].append(
-        {
-            'x': process,
-            'y': database['process_cpu_use'],
-            'name': "Grafico CPU",
-            'type': 'line',
-        }
-    )
-   
-    return graph
 
 
 #chama a funcao para atualizar o grafico de memoria do processo a cada 5 segundos
