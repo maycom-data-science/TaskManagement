@@ -1,6 +1,7 @@
 from Monitoring.CPU_Monitoring import CpuMonitoringThread
 from Monitoring.Mem_Monitoring import MemMonitoring
 from Monitoring.Process_Mem_Monitoring import ProcessMemMonitoring
+from Monitoring.Process_CPU_Monitoring import ProcessCpuMonitoringThread
 import subprocess
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
@@ -42,27 +43,9 @@ for cpu_core in cpu_cores:
     threads.append(t)
     cpu_cores_info = t.get_cpu_usage()
 
-#-------------------------------------------
-
-#variavel que vamos usar de "banco de dados" para utilizar no nosso dashboard
-database = {
-    'index': [],
-    'total_memory': 0,
-    'free_memory': [],
-    'available_memory': [],
-    'free_memory_percentual': 0,
-    'available_memory_percentual': 0,
-    'cached_memory': [],
-    'virtual_memory': [],
-    'process_size': 0,
-    'process_pss': 0,
-    'process_rss': 0,
-    'cpu_usage': [], #primeira possição tem o uso da cpu 0, a segunda o uso da cpu1, etc... e o ultima possição tem o uso geral da cpu
-    'number_threads': 0
-}
-
 mem = MemMonitoring()
 process_mem = ProcessMemMonitoring()
+process_cpu = ProcessCpuMonitoringThread()
 
 N = 20
 
@@ -83,7 +66,28 @@ def get_processes_id():
     return(pids)
 #-------------------------
 
-
+#variavel que vamos usar de "banco de dados" para utilizar no nosso dashboard
+database = {
+    'index': [],
+    'total_memory': 0,
+    'free_memory': [],
+    'available_memory': [],
+    'free_memory_percentual': 0,
+    'available_memory_percentual': 0,
+    'cached_memory': [],
+    'virtual_memory': [],
+    'process_size': [],
+    'process_pss': [],
+    'process_rss': [],
+    'number_threads': [],
+    'cpu_usage': [],
+    'process_users': [],
+    'process_user': "",
+    'process_name': "",
+    'process_threads': 0,
+    'process_priority': 0,
+    'process_cpu_use': 0
+}
 
 processes = get_processes_id()
 
@@ -121,12 +125,12 @@ app.layout = html.Div( style={'padding-left': 100, 'padding-right': 100, 'paddin
             style={'width': 500, 'margin-top': 40, 'margin-bottom': 40},
         ),
         html.Div(id='process_memory_info'), 
-      
+        html.Div(id='process_cpu_info'),        
         dcc.Graph(
             id='process_memory_graph',
             config={'displayModeBar': False},
-        ),
-    ], 
+        )
+    ]
 )
 
 
@@ -151,8 +155,21 @@ def update_cpu_data(value):
 
     database['cpu_usage'] = new_cpu_data
     database['number_threads'] = threads[0].get_threads_used(get_processes_id())
-    
 
+    users = threads[0].get_process_users(get_processes_id())
+    unique_users = list(set(users.values())) 
+    database['process_users'] = unique_users 
+
+def update_process_cpu_data(process_id, n_intervals):
+    info = process_cpu.get_process_cpu_usage(process_id)
+
+    database['process_threads'] = info['num_threads']
+    database['process_priority'] = info['priority']
+    database['process_name'] = info['process_name_limited']
+    database['process_cpu_use'] = info['cpu_usage']
+
+    user = process_cpu.get_process_user(process_id)
+    database['process_users'] = user[process_id]
 
 def update_process_memory_data(pid):
     process_data = process_mem.get_process_memory_usage(pid)
@@ -168,7 +185,7 @@ def update_process_memory_data(pid):
 )
 def update_total_memory(n_intervals):
     update_memory_data(n_intervals)
-    update_cpu_data(n_intervals) 
+    #update_cpu_data(n_intervals) 
     return (f'Memória: Total: {database["total_memory"]:.2f}Mb_____Disponivel: {database["available_memory"][-1]:.2f}Mb ({database["available_memory_percentual"]:.2f}%)_____Livre: {database["free_memory"][-1]:.2f}Mb ({database["free_memory_percentual"]:.2f}%)_____Em cache: {database["cached_memory"][-1]:.2f}Mb_____Virtual: {database["virtual_memory"][-1]:.2f}Gb')
 
 #chama a funcao para atualizar o grafico de memoria a cada 5 segundos
@@ -200,6 +217,16 @@ def update_memory_graph(input_data, n_intervals):
     return graph
 
 @app.callback(
+    Output('cpu_info', 'children'), 
+    Input('interval', 'n_intervals'),
+)
+
+def update_cpu_info(n_intervals):
+    update_cpu_data(n_intervals) 
+    return (f'Número total de processos no sistema: {len(get_processes_id())}_____Numero de threads criadas: {database["number_threads"]}___Usuários dos processos em exec({database["process_users"]}%)_____Uso geral da CPU: {database["cpu_usage"][-1]:.2f}%')
+
+
+@app.callback(
     Output('CPU_graph', 'figure'),
     Input('interval', 'n_intervals')
 
@@ -213,7 +240,6 @@ def update_cpu_graph(n_intervals):
             'width': 600,
         }
     }
-    
     graph['data'].append(
         {
             'x': cpu_cores,
@@ -243,6 +269,16 @@ def update_process_options(n_intervals):
 def update_total_memory(process, n_intervals):
     update_process_memory_data(process)    
     return (f'Tamanho: {database["process_size"]:.2f}Mb_____Pss: {database["process_pss"]:.2f}Mb _____Rss: {database["process_rss"]:.2f}Mb')
+
+@app.callback(
+    Output('process_cpu_info', 'children'), 
+    [Input('process_dropdown', 'value'),
+    Input('interval', 'n_intervals')]
+)
+def update_total_cpu(process, n_intervals):
+    update_process_cpu_data(process, n_intervals)    
+    return (f'Nome do Processo: {database["process_name"]}---Nome de usuário: {database["process_users"]}---ThreadsDoProcesso:{database["process_threads"]}---Processo_Uso da CPU: {database["process_cpu_use"]}---Prioridade do processo {database["process_priority"]}')
+
 
 #chama a funcao para atualizar o grafico de memoria do processo a cada 5 segundos
 @app.callback(

@@ -54,7 +54,7 @@ class CpuMonitoringThread(threading.Thread):
             except:
                 continue
 
-        return(f"Total de threads: {total_threads}")
+        return(total_threads)
     
 
     def get_process_users(self, pids):
