@@ -6,7 +6,13 @@ import subprocess
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
 
-app = Dash(__name__)
+
+external_stylesheets = [
+    'https://unpkg.com/terminal.css@0.7.2/dist/terminal.min.css',
+]
+
+
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 
 #metodo para pegar o número de cores da máquina
 def get_number_cores():    
@@ -87,10 +93,10 @@ processes = get_processes_id()
 
 
 #HTML do nosso dashboard
-app.layout = html.Div(
-    children=[
+app.layout = html.Div( style={'padding-left': 100, 'padding-right': 100, 'padding-top': 40, 'backgroundColor': '#bbb6ed', 'text': '#7FDBFF'}, children=[
         dcc.Interval(id='interval', interval= 5000),
         html.Div(id='memory_info'),   
+        html.Div(id='cpu_info'),   
         dcc.Checklist(
             id='memory_check_list',
             options=[
@@ -100,19 +106,23 @@ app.layout = html.Div(
             ],
             value=['available_memory']
         ),       
-        dcc.Graph(
-            id='memory_graph',
-            config={'displayModeBar': False},
-        ),
-        html.Div(id='cpu_info'),   
-        dcc.Graph(
-            id='CPU_graph',
-            config={'displayModeBar': False}
+        html.Div([
+            dcc.Graph(
+                id='memory_graph',
+                config={'displayModeBar': False},
+                style={'margin-right': 40}
+            ),
+                
+            dcc.Graph(
+                id='CPU_graph',
+                config={'displayModeBar': False}
+            )],style={'display': 'flex', 'flex-direction': 'row'}
         ),
         dcc.Dropdown(
             id = 'process_dropdown',
             options = processes,
-            value= processes[0]
+            value= processes[0],
+            style={'width': 500, 'margin-top': 40, 'margin-bottom': 40},
         ),
         html.Div(id='process_memory_info'), 
         html.Div(id='process_cpu_info'),        
@@ -144,7 +154,6 @@ def update_cpu_data(value):
         new_cpu_data.append(t.get_cpu_usage())
 
     database['cpu_usage'] = new_cpu_data
-
     database['number_threads'] = threads[0].get_threads_used(get_processes_id())
 
     users = threads[0].get_process_users(get_processes_id())
@@ -192,7 +201,7 @@ def update_memory_graph(input_data, n_intervals):
         'layout': {
             'title': 'Uso de Memoria em Mb',
             'height': 400,
-            'width': 600,
+            'width': 1000,
         }
     }
     for x in input_data:
