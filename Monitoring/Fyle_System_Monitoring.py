@@ -44,4 +44,20 @@ class FileSystemMonitoring():
             print("O comando 'df' não está disponível no sistema.")
             return None
 
+    def get_process_files_and_sizes(self, pid):
+        command = ['lsof', '-Ftnsz', '-p', str(pid)]
+        output = subprocess.check_output(command).decode('utf-8')
+        lines = output.split('\n')[1:]
+        files = {}
+        current_file = None
+        for line in lines:
+            if line.startswith('n'):
+                current_file = line[1:]
+            elif line.startswith('s'):
+                if current_file is not None:
+                    file_size = int(line[1:])
+                    files[current_file] = file_size
+                    current_file = None
+        return files                #Retorna um dicionário com a chave sendo o diretório do arquivo e o valor sendo o tamanho do arquivo
+
     

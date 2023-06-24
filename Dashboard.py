@@ -89,7 +89,8 @@ database = {
     'process_name': "",
     'process_threads': 0,
     'process_priority': 0,
-    'process_cpu_use': 0
+    'process_cpu_use': 0,
+    'process_used_files': {}
 }
 
 processes = get_processes_id()
@@ -128,7 +129,11 @@ app.layout = html.Div( style={'padding-left': 100, 'padding-right': 100, 'paddin
             style={'width': 500, 'margin-top': 40, 'margin-bottom': 40},
         ),
         html.Div(id='process_memory_info'), 
-        html.Div(id='process_cpu_info'),        
+        html.Div(id='process_cpu_info'),
+        html.Div(id='process_used_files', 
+            children=[html.H2(f'{chave}: {valor} \n') for chave, valor in database['process_used_files'].items()]
+
+        ),         
         dcc.Graph(
             id='process_memory_graph',
             config={'displayModeBar': False},
@@ -194,6 +199,8 @@ def update_process_memory_data(pid):
     database['process_pss'] = process_data['pss']
     database['process_rss'] = process_data['rss']
 
+def update_process_files_used(process_id, n_intervals): 
+    database['process_used_files'] = fileSystem.get_process_files_and_sizes(process_id)
 
 #chama a função para atualizar os dados de memoria a cada 5 segundos
 @app.callback(
@@ -351,6 +358,18 @@ def update_total_memory(input_data, n_intervals):
             lines.append(html.Br())
 
     return (lines)
+
+@app.callback(
+    Output('process_used_files', 'children'), 
+    [Input('process_dropdown', 'value'),
+    Input('interval', 'n_intervals')]
+)
+def update_used_files(process, n_intervals):
+    update_process_files_used(process, n_intervals)
+    dictionary = database['process_used_files']
+    string_line_split = '\n'.join([f'{key}: {value}' for key, value in dictionary.items()])
+    #print(string_line_split)    
+    return (f'O programa abriu {len(dictionary)} Arquivos, sendo eles os seguintes: -----------------------' + string_line_split)
 
 
 app.run_server(debug=True)
