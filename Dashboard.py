@@ -2,6 +2,7 @@ from Monitoring.CPU_Monitoring import CpuMonitoringThread
 from Monitoring.Mem_Monitoring import MemMonitoring
 from Monitoring.Process_Mem_Monitoring import ProcessMemMonitoring
 from Monitoring.Process_CPU_Monitoring import ProcessCpuMonitoringThread
+from Monitoring.Fyle_System_Monitoring import FileSystemMonitoring
 import subprocess
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
@@ -46,8 +47,10 @@ for cpu_core in cpu_cores:
 mem = MemMonitoring()
 process_mem = ProcessMemMonitoring()
 process_cpu = ProcessCpuMonitoringThread()
+fileSystem = FileSystemMonitoring()
 
 N = 20
+
 
 #metodo para pegar os PIDs de todos os processos que estão rodando no sistema
 def get_processes_id():
@@ -129,7 +132,21 @@ app.layout = html.Div( style={'padding-left': 100, 'padding-right': 100, 'paddin
         dcc.Graph(
             id='process_memory_graph',
             config={'displayModeBar': False},
-        )
+            
+        ),
+        
+        html.Br(),
+        html.Br(),
+        html.H2("Informações atuais do sistema de arquivos"),
+        
+        dcc.Checklist(
+            id='file_check_list',
+            options=[
+                {'label': 'Modo resumido', 'value': 'resumido'},               
+            ],
+            value=['resumido']
+        ),           
+        html.Div(id='file_system_info')
     ]
 )
 
@@ -306,5 +323,34 @@ def update_process_memory_graph(value):
     )
         
     return graph
+
+#chama a função para atualizar os dados de memoria do processo a cada 5 segundos
+@app.callback(
+    Output('file_system_info', 'children'),     
+     [Input('file_check_list', 'value'),
+    Input('interval', 'n_intervals')]
+)
+def update_total_memory(input_data, n_intervals):
+    if(len(input_data) > 0):
+        cmd = ['df', '-hT', '-x', 'tmpfs']
+    else:
+        cmd = ['df', '-hT']
+    filesystem_info = fileSystem.get_filesystem_info(cmd)
+    lines = [html.Br()]
+    if filesystem_info is not None:
+        for fs in filesystem_info:            
+            info = ""
+            info += "Sist. Arq.: " + fs['filesystem'] + " - - - "
+            info += "Tipo: " + fs['type'] + " - - - "
+            info += "Tamanho: " + fs['size'] + " - - - "
+            info += "Usado: " + fs['used'] + " - - - "
+            info += "Disponível: " + fs['available'] + " - - - "
+            info += "Uso%: " + fs['percent_used'] + " - - - "
+            info += "Montado em: " + fs['mountpoint']
+            lines.append(html.P(info))
+            lines.append(html.Br())
+
+    return (lines)
+
 
 app.run_server(debug=True)
